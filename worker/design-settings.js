@@ -4,7 +4,7 @@ export const FONTS={
  serif:{name:'明朝',family:'"Yu Mincho","Hiragino Mincho ProN",Georgia,serif'},
  mono:{name:'デジタル',family:'"Cascadia Code",Consolas,"Courier New",monospace'}
 };
-export const DEFAULT_DESIGN={color:'#f3f0eb',font:'rounded',weight:600,spacing:-.055,position:'center',dateColor:'#d2d0cc',dateSize:18,dateVisible:true,secondsColor:'#d2d0cc',secondsSize:32,autoContrast:true,launcherBlur:14,panelBlurs:{news:22,weather:18,settings:18,other:18},glass:'standard',edgeLight:true,tileMotion:true,weatherAuto:true,motion:'subtle',styles:[]};
+export const DEFAULT_DESIGN={color:'#f3f0eb',font:'rounded',weight:600,spacing:-.055,position:'center',dateColor:'#d2d0cc',dateSize:18,dateVisible:true,secondsColor:'#d2d0cc',secondsSize:32,autoContrast:true,launcherBlur:14,panelBlurs:{news:22,weather:18,settings:18,other:18},glass:'standard',edgeLight:true,tileMotion:true,weatherAuto:true,weatherMode:'auto',weatherTheme:'rain',weatherDay:'auto',musicPeek:true,motion:'subtle',styles:[]};
 const bad=()=>{throw Object.assign(Error('表示の設定を確認してください。'),{status:400})};
 const choice=(v,values)=>values.includes(v)?v:bad();
 const number=(v,min,max)=>typeof v==='number'&&Number.isFinite(v)&&v>=min&&v<=max?v:bad();
@@ -21,7 +21,10 @@ export function cleanDesign(value,nested=false){
   case'position':out[key]=choice(v,['center','left','right']);break;
   case'dateSize':out[key]=number(v,12,36);break;
   case'secondsSize':out[key]=number(v,16,60);break;
-  case'autoContrast':case'dateVisible':case'edgeLight':case'tileMotion':case'weatherAuto':if(typeof v!=='boolean')bad();out[key]=v;break;
+  case'autoContrast':case'dateVisible':case'edgeLight':case'tileMotion':case'weatherAuto':case'musicPeek':if(typeof v!=='boolean')bad();out[key]=v;break;
+  case'weatherMode':out[key]=choice(v,['off','auto','manual']);break;
+  case'weatherTheme':out[key]=choice(v,['sun','cloud','rain','storm','snow','fog']);break;
+  case'weatherDay':out[key]=choice(v,['auto','day','night']);break;
   case'launcherBlur':out[key]=number(v,0,32);break;
   case'panelBlurs':if(!v||typeof v!=='object'||Array.isArray(v))bad();out[key]={};for(const[k,n]of Object.entries(v)){choice(k,['news','weather','settings','other']);out[key][k]=number(n,0,32)}break;
   case'glass':out[key]=choice(v,['light','standard','smoke']);break;
@@ -30,7 +33,7 @@ export function cleanDesign(value,nested=false){
   default:bad();
  }return out;
 }
-export function normalizeDesign(value){try{const clean=cleanDesign(value||{});return{...DEFAULT_DESIGN,...clean,panelBlurs:{...DEFAULT_DESIGN.panelBlurs,...clean.panelBlurs},styles:clean.styles||[]}}catch{return{...DEFAULT_DESIGN,panelBlurs:{...DEFAULT_DESIGN.panelBlurs},styles:[]}}}
+export function normalizeDesign(value){try{const clean=cleanDesign(value||{});if(!clean.weatherMode&&clean.weatherAuto===false)clean.weatherMode='off';return{...DEFAULT_DESIGN,...clean,panelBlurs:{...DEFAULT_DESIGN.panelBlurs,...clean.panelBlurs},styles:clean.styles||[]}}catch{return{...DEFAULT_DESIGN,panelBlurs:{...DEFAULT_DESIGN.panelBlurs},styles:[]}}}
 export function weatherScene(weather,place,now=Date.now()){
  if(!weather?.current||weather.place!==place||!Number.isFinite(weather.fetchedAt)||now-weather.fetchedAt>7200000)return null;
  const code=weather.current.weather_code;if(!Number.isInteger(code)||code<0||code>99)return null;
@@ -38,6 +41,12 @@ export function weatherScene(weather,place,now=Date.now()){
  const heavy=[65,67,75,82,86,95,96,99].includes(code),light=[51,53,56,61,66,71,77,80,85].includes(code);
  const day=weather.current.is_day===0?false:weather.current.is_day===1?true:new Date(now).getHours()>=6&&new Date(now).getHours()<18;
  return{kind,day,intensity:heavy?1:light?.35:.65};
+}
+export function selectedWeatherScene(design,weather,place,now=Date.now()){
+ if(design.weatherMode==='off')return null;
+ if(design.weatherMode!=='manual')return weatherScene(weather,place,now);
+ const day=design.weatherDay==='day'?true:design.weatherDay==='night'?false:new Date(now).getHours()>=6&&new Date(now).getHours()<18;
+ return{kind:design.weatherTheme,day,intensity:design.weatherTheme==='storm'?1:.65};
 }
 export function playingTrack(data,now=Date.now()){
  const at=Date.parse(data?.fetchedAt),section=data?.sections?.current;if(!Number.isFinite(at)||!section?.available||section.isPlaying!==true||!Array.isArray(section.items)||now-at>75000)return null;

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {cleanDesign,normalizeDesign,weatherScene,playingTrack,readableColor} from '../worker/design-settings.js';
+import {cleanDesign,normalizeDesign,weatherScene,selectedWeatherScene,playingTrack,readableColor} from '../worker/design-settings.js';
 import {cleanSettingsPatch} from '../worker/home.js';
 import worker from '../worker/index.js';
 
@@ -16,6 +16,11 @@ test('weather follows selected location, actual day/night, rain strength and fre
  assert.equal(weatherScene({...input,current:{weather_code:65,is_day:1}},'東京',now).intensity,1);
  for(const[code,kind]of [[0,'sun'],[3,'cloud'],[45,'fog'],[75,'snow'],[95,'storm']])assert.equal(weatherScene({...input,current:{weather_code:code}},'東京',now).kind,kind);
  assert.equal(weatherScene(input,'大阪',now),null);assert.equal(weatherScene(input,'東京',now+7200001),null);
+ assert.equal(selectedWeatherScene(normalizeDesign({weatherMode:'off'}),input,'東京',now),null);
+ assert.deepEqual(selectedWeatherScene(normalizeDesign({weatherMode:'manual',weatherTheme:'rain',weatherDay:'night'}),null,null,now),{kind:'rain',day:false,intensity:.65});
+ assert.equal(selectedWeatherScene(normalizeDesign({weatherMode:'manual',weatherTheme:'storm',weatherDay:'day'}),null,null,now).intensity,1);
+ assert.equal(normalizeDesign({weatherAuto:false}).weatherMode,'off');
+ assert.throws(()=>cleanDesign({weatherMode:'unknown'}));assert.throws(()=>cleanDesign({weatherTheme:'url(...)'}));
 });
 test('footer music appears only for current playback and accepts safe artwork',()=>{
  const now=Date.now(),input={fetchedAt:new Date(now).toISOString(),sections:{current:{available:true,isPlaying:true,items:[{name:'Song',artists:'Artist',image:'https://cdn.example.test/album.jpg'}]}}};
