@@ -1,0 +1,9 @@
+.env
+.env.*
+!.env.example
+node_modules
+.git
+tests
+legacy-data.json
+*.zip
+*.tar

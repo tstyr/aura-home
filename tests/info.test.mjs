@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {handleInfo} from '../worker/info.js';
+const originalFetch=globalThis.fetch,originalNow=Date.now;let now=originalNow(),calls=0;Date.now=()=>now;const feed='<rss><channel><item><title>Fixture story</title><link>https://example.test/story</link></item></channel></rss>';
+const call=async path=>{const u=new URL('https://fixture.test'+path);return handleInfo(new Request(u),{},u)};
+try{
+ globalThis.fetch=async()=>{calls++;return new Response(feed)};let r=await call('/api/info/news?source=google&topic=science');assert.equal(r.status,200);assert.equal((await r.json()).items.length,1);assert.equal(calls,1);await call('/api/info/news?source=google&topic=science');assert.equal(calls,1);
+ now+=300001;globalThis.fetch=async()=>{calls++;throw Error('fetch failed')};r=await call('/api/info/news?source=google&topic=science');const stale=await r.json();assert.equal(stale.stale,true);assert.equal(stale.items.length,1);assert.ok(!stale.error.includes('fetch failed'));await call('/api/info/news?source=google&topic=science');assert.equal(calls,2);
+ globalThis.fetch=async()=>new Response('x'.repeat(2*1024*1024+1));r=await call('/api/info/news?source=google&topic=world');assert.equal(r.status,502);assert.ok((await r.json()).error.includes('大きすぎ'));
+ globalThis.fetch=async()=>new Response(null,{status:302,headers:{Location:'https://evil.test/steal'}});r=await call('/api/info/news?source=nhk&topic=business');assert.equal(r.status,502);assert.ok((await r.json()).error.includes('転送先'));
+ globalThis.fetch=async url=>{calls++;if(String(url).startsWith('https://api.jikan.moe'))throw Error('fetch failed');assert.equal(url,'https://graphql.anilist.co');return Response.json({data:{Page:{media:[{id:1,title:{native:'公開予定の作品'},startDate:{year:2027,month:1,day:2},siteUrl:'https://anilist.co/anime/1/'}]}}})};r=await call('/api/info/entertainment?mode=anime');const anime=await r.json();assert.equal(anime.source,'AniList');assert.equal(anime.items[0].date,'2027-01-02');assert.equal(anime.items[0].id,'anilist-1');
+ now+=300001;globalThis.fetch=async url=>{assert.ok(String(url).includes('status=upcoming'));assert.ok(String(url).includes('start_date='));return Response.json({data:[{mal_id:2,title_japanese:'直近の公開予定',aired:{from:'2027-01-04T00:00:00Z'},url:'https://myanimelist.net/anime/2/'}]})};r=await call('/api/info/entertainment?mode=anime');assert.equal((await r.json()).items[0].date,'2027-01-04');
+ console.log('PASS: provider cache, stale recovery/backoff, Japanese errors, response bounds, redirect allowlist, anime fallback.');
+}finally{globalThis.fetch=originalFetch;Date.now=originalNow}

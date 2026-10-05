@@ -1,0 +1,14 @@
+node_modules/
+.vercel/
+.env
+.env.*
+!.env.example
+api/entry.js
+public/
+*.tar
+*.zip
+legacy-data.json
+
+.vercel
+
+*.private.*
