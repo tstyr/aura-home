@@ -1,4 +1,5 @@
 import ICAL from 'ical.js';
+import {cleanDesign} from './design-settings.js';
 import {googleConfigured,googleSources} from './google.js';
 import {HUB_APPS,cleanHub} from './hub-settings.js';
 
@@ -18,6 +19,7 @@ export function cleanSettingsPatch(value){if(!value||Array.isArray(value)||typeo
  case'clockWeight':if(![600,700,800,900].includes(v))throw error('文字の太さを確認してください。');out[k]=v;break;
  case'tileOrder':if(!Array.isArray(v)||v.length<8||v.length>apps.length||new Set(v).size!==v.length||v.some(a=>!apps.includes(a))||apps.slice(0,8).some(a=>!v.includes(a)))throw error('アプリの並び順を確認してください。');out[k]=v;break;
  case'hub':out[k]=cleanHub(v);break;
+ case'design':out[k]=cleanDesign(v);break;
  case'location':if(v===null){out[k]=null;break}out[k]={name:text(v.name,60,true),lat:number(v.lat,-90,90),lon:number(v.lon,-180,180)};break;
  case'background':if(!v||!['preset','image'].includes(v.kind))throw error('背景を確認してください。');if(v.kind==='preset'&&!['gray','graphite','silver','charcoal'].includes(v.id))throw error('背景を確認してください。');if(v.kind==='image'&&!UUID.test(v.id))throw error('背景画像を確認してください。');out[k]={kind:v.kind,id:v.id,name:typeof v.name==='string'?v.name.slice(0,120):'',dim:number(v.dim??.3,0,.8),blur:number(v.blur??0,0,24),x:number(v.x??50,0,100),y:number(v.y??50,0,100),rotation:number(v.rotation??0,0,1440),slides:Array.isArray(v.slides)?v.slides.filter(id=>typeof id==='string'&&UUID.test(id)).slice(0,100):[]};break;
  default:throw error('未対応の設定です。');

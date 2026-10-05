@@ -3,6 +3,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {build} from 'esbuild';
 const root=fileURLToPath(new URL('../',import.meta.url)),types={'.html':'text/html;charset=utf-8','.css':'text/css;charset=utf-8','.js':'application/javascript;charset=utf-8','.png':'image/png','.webmanifest':'application/manifest+json'},assets={};
+await build({entryPoints:[path.join(root,'client/design.js')],outfile:path.join(root,'web/design.js'),bundle:true,format:'iife',platform:'browser',target:['safari16','chrome110'],legalComments:'inline'});
 for(const name of fs.readdirSync(path.join(root,'web'))){const bytes=fs.readFileSync(path.join(root,'web',name));assets[name==='index.html'?'/':'/'+name]={type:types[path.extname(name)]||'application/octet-stream',base64:bytes.toString('base64')}}
 fs.mkdirSync(path.join(root,'api'),{recursive:true});fs.mkdirSync(path.join(root,'public'),{recursive:true});
 fs.writeFileSync(path.join(root,'public/robots.txt'),'User-agent: *\nDisallow: /\n');

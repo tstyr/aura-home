@@ -12,13 +12,13 @@ export async function deleteAccountData(user,env,dependencies={}){
  let googleTokens=null;try{if(connection)googleTokens=await unseal(env,owner,connection.tokens)}catch{}
  // The caller first revokes sessions. Keep the Auth identity until data cleanup
  // succeeds, so a failed storage/database cleanup can be retried after login.
- for(const root of ['backgrounds/','calendar-cache/','google-cache/']){
+ for(const root of ['backgrounds/','calendar-cache/','google-cache/','settings/']){
   const prefix=root+encodeURIComponent(owner)+'/';let cursor='';
   do{const list=await storage.list({prefix,limit:1000,cursor});if(list.objects.length)await storage.delete(list.objects.map(item=>item.key));cursor=list.truncated?list.cursor:''}while(cursor);
  }
  await database.raw.begin(async tx=>{
   for(const table of ['home_settings','home_records','calendar_sources','google_accounts','google_oauth_states'])await tx.unsafe('DELETE FROM '+table+' WHERE user_id=$1',[owner]);
-  for(const root of ['backgrounds/','calendar-cache/','google-cache/'])await tx.unsafe("DELETE FROM home_objects WHERE object_key LIKE $1",[root+encodeURIComponent(owner)+'/%']);
+  for(const root of ['backgrounds/','calendar-cache/','google-cache/','settings/'])await tx.unsafe("DELETE FROM home_objects WHERE object_key LIKE $1",[root+encodeURIComponent(owner)+'/%']);
  });
  const {error}=await admin.deleteUser(user.id);if(error)throw Error('Account deletion failed');
  let googleRevoked=!connection;

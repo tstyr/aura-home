@@ -13,7 +13,7 @@ export function parseRSS(raw){
  if(/<!DOCTYPE|<!ENTITY/i.test(raw))throw Error('フィードの形式を確認できませんでした。');
  const parsed=new XMLParser({parseTagValue:false,ignoreAttributes:false,processEntities:false}).parse(raw);
  const list=parsed.rss?.channel?.item;if(!list)return[];
- return(Array.isArray(list)?list:[list]).slice(0,25).map(r=>({title:str(r.title).replace(/&amp;/g,'&').replace(/&quot;/g,'"'),url:https(r.link),date:date(r.pubDate),source:str(r.source?.['#text']||'NHK',80)})).filter(x=>x.title&&x.url);
+ return(Array.isArray(list)?list:[list]).slice(0,25).map(r=>({title:str(r.title).replace(/&amp;/g,'&').replace(/&quot;/g,'"'),url:https(r.link),date:date(r.pubDate),source:str(r.source?.['#text']||'NHK',80),description:str(r.description||'',360).replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim()})).filter(x=>x.title&&x.url);
 }
 export async function handleInfo(request,env,url){
  if(request.method!=='GET')return reply({error:'対応していない操作です。'},405);

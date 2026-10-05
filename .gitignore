@@ -12,3 +12,5 @@ legacy-data.json
 .vercel
 
 *.private.*
+
+web/design.js
