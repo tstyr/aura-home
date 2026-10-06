@@ -9,6 +9,11 @@ export function cleanHub(value){
   case'displayName':out[k]=text(v,80);break;
   case'newsTopic':out[k]=oneOf(v,NEWS_TOPICS);break;
   case'newsSource':out[k]=oneOf(v,['nhk','google']);break;
+  case'newsExclusions':{
+   if(!v||typeof v!=='object'||Array.isArray(v)||Object.keys(v).some(key=>!['keywords','sources'].includes(key)))fail();
+   const terms=(values,max)=>{if(!Array.isArray(values)||values.length>max)fail();const seen=new Set();return values.map(value=>{const term=text(value,80);if(!term||/[\u0000-\u001f\u007f]/.test(term))fail();return term}).filter(term=>{const key=term.normalize('NFKC').toLowerCase();if(seen.has(key))return false;seen.add(key);return true})};
+   out[k]={keywords:terms(v.keywords===undefined?[]:v.keywords,20),sources:terms(v.sources===undefined?[]:v.sources,10)};break;
+  }
   case'musicService':out[k]=oneOf(v,['spotify','apple','youtube']);break;
   case'widgets':if(!Array.isArray(v)||v.length>4||new Set(v).size!==v.length)fail();out[k]=v.map(x=>oneOf(x,['weather','agenda','news','worldclock']));break;
   case'timezones':if(!Array.isArray(v)||v.length>6||new Set(v).size!==v.length)fail();out[k]=v.map(x=>{text(x,80);try{new Intl.DateTimeFormat('ja-JP',{timeZone:x})}catch{fail()}return x});break;

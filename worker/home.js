@@ -18,6 +18,7 @@ export function cleanSettingsPatch(value){if(!value||Array.isArray(value)||typeo
  case'clockSize':out[k]=number(v,.7,1.4);break;
  case'clockWeight':if(![600,700,800,900].includes(v))throw error('文字の太さを確認してください。');out[k]=v;break;
  case'tileOrder':if(!Array.isArray(v)||v.length<8||v.length>apps.length||new Set(v).size!==v.length||v.some(a=>!apps.includes(a))||apps.slice(0,8).some(a=>!v.includes(a)))throw error('アプリの並び順を確認してください。');out[k]=v;break;
+ case'favoriteApps':if(!Array.isArray(v)||v.length>6||new Set(v).size!==v.length||v.some(id=>!apps.includes(id)))throw error('お気に入りは対応するアプリを6つまで選んでください。');out[k]=v.slice();break;
  case'hub':out[k]=cleanHub(v);break;
  case'design':out[k]=cleanDesign(v);break;
  case'location':if(v===null){out[k]=null;break}out[k]={name:text(v.name,60,true),lat:number(v.lat,-90,90),lon:number(v.lon,-180,180)};break;
