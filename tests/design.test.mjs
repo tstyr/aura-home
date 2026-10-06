@@ -20,6 +20,10 @@ test('weather follows selected location, actual day/night, rain strength and fre
  assert.deepEqual(selectedWeatherScene(normalizeDesign({weatherMode:'manual',weatherTheme:'rain',weatherDay:'night'}),null,null,now),{kind:'rain',day:false,intensity:.65});
  assert.equal(selectedWeatherScene(normalizeDesign({weatherMode:'manual',weatherTheme:'storm',weatherDay:'day'}),null,null,now).intensity,1);
  assert.equal(normalizeDesign({weatherAuto:false}).weatherMode,'off');
+ for(const mode of ['off','auto','manual'])assert.equal(normalizeDesign({weatherMode:mode,weatherAuto:mode!=='auto'}).weatherAuto,mode==='auto');
+ const manual=normalizeDesign({weatherMode:'manual',weatherTheme:'snow',weatherDay:'auto'});
+ assert.equal(selectedWeatherScene(manual,null,null,new Date(2026,9,6,17,59).getTime()).day,true);
+ assert.equal(selectedWeatherScene(manual,null,null,new Date(2026,9,6,18,0).getTime()).day,false);
  assert.throws(()=>cleanDesign({weatherMode:'unknown'}));assert.throws(()=>cleanDesign({weatherTheme:'url(...)'}));
 });
 test('footer music appears only for current playback and accepts safe artwork',()=>{

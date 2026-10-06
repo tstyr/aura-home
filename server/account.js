@@ -14,8 +14,15 @@ export async function verifiedSessionId(session,user){
 }
 function deviceName(ua){const platform=/iPad/.test(ua)?'iPad':/iPhone/.test(ua)?'iPhone':/Android/.test(ua)?'Android':/Windows/.test(ua)?'Windows':/Macintosh/.test(ua)?'Mac':'ブラウザ';const browser=/Edg\//.test(ua)?'Edge':/Chrome\//.test(ua)?'Chrome':/Safari\//.test(ua)?'Safari':/Firefox\//.test(ua)?'Firefox':'';return [platform,browser].filter(Boolean).join(' · ')}
 export async function registerDevice(db,user,sessionId,request,{checkAuthSession=true}={}){
- if(checkAuthSession){const active=await db.prepare('SELECT id FROM auth.sessions WHERE id=?::uuid AND user_id=?::uuid').bind(sessionId,user.id).first();if(!active)return false}
- const at=new Date().toISOString(),owner=request.headers.get('oai-authenticated-user-id'),value=JSON.stringify({name:deviceName(request.headers.get('user-agent')||''),createdAt:at,revoked:false});
+ const owner=request.headers.get('oai-authenticated-user-id');
+ // Check both session presence and revocation on every request. Reading the
+ // device in the same query avoids a database write for each asset/poll.
+ const existing=checkAuthSession
+  ?await db.prepare("SELECT sessions.id AS session_id,devices.value,devices.updated_at FROM auth.sessions AS sessions LEFT JOIN home_records AS devices ON devices.user_id=? AND devices.kind='devices' AND devices.id=? WHERE sessions.id=?::uuid AND sessions.user_id=?::uuid").bind(owner,sessionId,sessionId,user.id).first()
+  :await db.prepare("SELECT value,updated_at FROM home_records WHERE user_id=? AND kind='devices' AND id=?").bind(owner,sessionId).first();
+ if(checkAuthSession&&!existing)return false;
+ if(existing?.value){if(JSON.parse(existing.value).revoked)return false;const age=Date.now()-Date.parse(existing.updated_at);if(age>=0&&age<60000)return true}
+ const at=new Date().toISOString(),value=JSON.stringify({name:deviceName(request.headers.get('user-agent')||''),createdAt:at,revoked:false});
  // Never resurrect a revoked device; ON CONFLICT only updates last-seen time.
  const row=await db.prepare("INSERT INTO home_records(user_id,kind,id,value,revision,updated_at) VALUES(?,'devices',?,?,1,?) ON CONFLICT(user_id,kind,id) DO UPDATE SET updated_at=excluded.updated_at RETURNING value").bind(owner,sessionId,value,at).first();return row&&!JSON.parse(row.value).revoked;
 }

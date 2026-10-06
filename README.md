@@ -56,7 +56,7 @@ Node.js 24、Supabase、Vercelを使います。
 
 ## 開発・検証
 
-`npm run dev` でローカルサーバーを起動し、`npm test` で回帰テストを実行します。テストはPGliteと模擬認証・外部APIを使い、本番データを変更しません。
+ローカルでは `.env.local` の `APP_ORIGIN=http://localhost:4173` にし、Supabase Authの許可するredirectにも `http://localhost:4173/auth/callback` を追加します。`npm run dev` でローカルサーバーを起動し、`npm test` で回帰テストを実行します。テストはPGliteと模擬認証・外部APIを使い、本番データを変更しません。GitHubのmainへのpushとPull Requestでも、Node.js 24でテストとビルドを自動確認します。
 
 確認対象: 認証済みのログイン画面からの遷移、公開/個人用ログイン、利用者別のDB/Storage/ローカル保存、CSRF、偽装ヘッダー、端末失効、設定競合、バックアップ、OAuth PKCEとstate、暗号化、Calendar取得、外部フィードの制限。
 

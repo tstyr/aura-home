@@ -33,7 +33,7 @@ export function cleanDesign(value,nested=false){
   default:bad();
  }return out;
 }
-export function normalizeDesign(value){try{const clean=cleanDesign(value||{});if(!clean.weatherMode&&clean.weatherAuto===false)clean.weatherMode='off';return{...DEFAULT_DESIGN,...clean,panelBlurs:{...DEFAULT_DESIGN.panelBlurs,...clean.panelBlurs},styles:clean.styles||[]}}catch{return{...DEFAULT_DESIGN,panelBlurs:{...DEFAULT_DESIGN.panelBlurs},styles:[]}}}
+export function normalizeDesign(value){try{const clean=cleanDesign(value||{});if(!clean.weatherMode)clean.weatherMode=clean.weatherAuto===false?'off':'auto';clean.weatherAuto=clean.weatherMode==='auto';return{...DEFAULT_DESIGN,...clean,panelBlurs:{...DEFAULT_DESIGN.panelBlurs,...clean.panelBlurs},styles:clean.styles||[]}}catch{return{...DEFAULT_DESIGN,panelBlurs:{...DEFAULT_DESIGN.panelBlurs},styles:[]}}}
 export function weatherScene(weather,place,now=Date.now()){
  if(!weather?.current||weather.place!==place||!Number.isFinite(weather.fetchedAt)||now-weather.fetchedAt>7200000)return null;
  const code=weather.current.weather_code;if(!Number.isInteger(code)||code<0||code>99)return null;
