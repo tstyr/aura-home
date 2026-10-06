@@ -61,7 +61,7 @@ const AuraExperience=(()=>{
    const action=button.dataset.islandAction;
    if(action==='undo'){undo();return}
    setExpanded(false);
-   if(action==='launcher')wake();else if(action!=='collapse'){if(action==='settings')settingsTab='general';openPanel(action,q('#island-toggle'))}
+   if(action==='launcher'){if(q('#panel')?.open)closePanel();wake()}else if(action!=='collapse'){if(action==='settings')settingsTab='general';openPanel(action,q('#island-toggle'))}
   };
   if(focused)q('#island-toggle')?.focus({preventScroll:true});
  }
